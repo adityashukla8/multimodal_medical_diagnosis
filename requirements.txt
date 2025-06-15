@@ -1,0 +1,16 @@
+pandas
+numpy
+
+tensorflow>=2.8.0
+torch
+transformers
+scikit-learn
+
+nltk
+
+apache-beam[gcp]
+pymongo
+
+python-dotenv
+
+ipdb
