@@ -11,6 +11,14 @@ import tensorflow as tf
 from tensorflow.keras.applications import DenseNet121
 from tensorflow.keras.applications.densenet import preprocess_input
 
+import torch
+from transformers import AutoTokenizer, AutoModel
+import re
+import string
+import nltk
+from nltk.corpus import stopwords
+nltk.download('stopwords')
+
 from pymongo import MongoClient
 from dotenv import load_dotenv
 load_dotenv()
@@ -27,6 +35,9 @@ BATCH_SIZE = int(os.environ.get("BATCH_SIZE", 100))
 DB_NAME = os.environ.get("DB_NAME")
 COLLECTION_NAME = os.environ.get("COLLECTION_NAME")
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+stop_words = set(stopwords.words('english'))
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -41,30 +52,78 @@ def parse_row_to_dict(row, header):
     fields = next(csv.reader([row]))
     return dict(zip(header, fields))
 
-def process_image(gcs_image_path):
-    """Load and preprocess an image from GCS path for DenseNet121."""
-    try:
-        img_data = tf.io.read_file(gcs_image_path)
-        img = tf.image.decode_image(img_data, channels=3, expand_animations=False)
-        img = tf.image.convert_image_dtype(img, tf.float32)
-        img = tf.image.resize(img, [224, 224])
-        img_array = tf.expand_dims(img, axis=0)
-        img_array = preprocess_input(img_array)
-        return img_array
-    except Exception as e:
-        logger.error(f"Error loading image {gcs_image_path}: {e}")
-        return None
+class GenerateEmbeddingsDoFn(beam.DoFn):
+    def setup(self):
+        self.image_model = DenseNet121(weights='imagenet', include_top=False, pooling='avg')
+        self.image_model.trainable = False
 
-def generate_image_embeddings(element, model):
-    """Generate image embeddings using the provided model."""
-    image_path = element.get('image_path')
-    img_array = process_image(image_path)
-    if img_array is not None:
-        features = model.predict(img_array, verbose=0)
-        element['image_features'] = features.flatten().tolist()
-    else:
-        element['image_features'] = None
-    return element
+        self.tokenizer = AutoTokenizer.from_pretrained("emilyalsentzer/Bio_ClinicalBERT")
+        self.text_model = AutoModel.from_pretrained("emilyalsentzer/Bio_ClinicalBERT").to(device)
+        self.text_model.eval()
+
+        self.stop_words = set(stopwords.words('english'))
+
+    def preprocess_text(self, text):
+        text = text.lower()
+        text = text.translate(str.maketrans('', '', string.punctuation))
+        text = re.sub(r'\s+', ' ', text).strip()
+        tokens = text.split()
+        tokens = [word for word in tokens if word not in self.stop_words]
+        return ' '.join(tokens)
+
+    def extract_text_features(self, text):
+        inputs = self.tokenizer(
+            text,
+            return_tensors="pt",
+            truncation=True,
+            padding="max_length",
+            max_length=512
+        ).to(device)
+
+        with torch.no_grad():
+            outputs = self.text_model(**inputs)
+        return outputs.last_hidden_state[:, 0, :].squeeze().cpu().numpy()
+
+    def process_image(self, gcs_image_path):
+        try:
+            img_data = tf.io.read_file(gcs_image_path)
+            img = tf.image.decode_image(img_data, channels=3, expand_animations=False)
+            img = tf.image.convert_image_dtype(img, tf.float32)
+            img = tf.image.resize(img, [224, 224])
+            img_array = tf.expand_dims(img, axis=0)
+            return preprocess_input(img_array)
+        except Exception as e:
+            logging.error(f"Image loading error: {e}")
+            return None
+
+    def process(self, element):
+        image_path = element.get('image_path')
+        case_text = element.get('case_text', "")
+
+        # Process image
+        image_embedding = None
+        img_array = self.process_image(image_path)
+        if img_array is not None:
+            features = self.image_model.predict(img_array, verbose=0)
+            image_embedding = features.flatten()
+
+        # Process text
+        text_embedding = None
+        try:
+            cleaned = self.preprocess_text(case_text)
+            text_embedding = self.extract_text_features(cleaned)
+        except Exception as e:
+            logging.error(f"Text embedding error: {e}")
+
+        element['image_features'] = image_embedding.tolist() if image_embedding is not None else None
+        element['text_features'] = text_embedding.tolist() if text_embedding is not None else None
+
+        if image_embedding is not None and text_embedding is not None:
+            element['combined_features'] = image_embedding.tolist() + text_embedding.tolist()
+        else:
+            element['combined_features'] = None
+
+        yield element
 
 class WriteToMongoDB(beam.DoFn):
     """A Beam DoFn for writing documents to MongoDB in batches."""
@@ -95,7 +154,9 @@ class WriteToMongoDB(beam.DoFn):
             "gender": element.get('gender', ""),
             "case_id": element.get('case_id', ""),
             "case_text": element.get('case_text', ""),
-            "image_features": element.get('image_features', []),
+            # "image_features": element.get('image_features', []),
+            # "text_features": element.get('text_features', []),
+            "combined_features": element.get('combined_features', []),
         }
 
         # self.collection.insert_one(doc)
@@ -126,21 +187,20 @@ class WriteToMongoDB(beam.DoFn):
 def run_pipeline(csv_path, mongo_uri, pipeline_options=None):
     """Run the Apache Beam pipeline for embedding extraction and MongoDB insertion."""
     headers = get_headers(csv_path)
-    model = DenseNet121(weights='imagenet', include_top=False, pooling='avg')
-    model.trainable = False
 
     with beam.Pipeline(options=pipeline_options) as p:
         (
             p
             | "ReadCSV" >> beam.io.ReadFromText(csv_path, skip_header_lines=True)
             | "ParseCSV" >> beam.Map(lambda row: parse_row_to_dict(row, headers))
-            | "GenerateImageEmbeddings" >> beam.Map(generate_image_embeddings, model=model)
+            # | "GenerateEmbeddings" >> beam.Map(generate_embeddings, image_model=image_model, text_model=text_model, tokenizer=text_tokenizer)
+            | "GenerateEmbeddings" >> beam.ParDo(GenerateEmbeddingsDoFn())
             | "WriteToMongoDB" >> beam.ParDo(WriteToMongoDB(mongo_uri, DB_NAME, COLLECTION_NAME))
             # | beam.Map(print)
         )
 
 if __name__ == "__main__":
-    mongo_uri = os.environ.get("MONGO_URI")
+    mongo_uri = get_env_variable("MONGO_URI")
     if not mongo_uri:
         logger.error("Environment variable 'mongo_uri' must be set.")
         exit(1)
@@ -154,6 +214,7 @@ if __name__ == "__main__":
         job_name=os.environ.get("JOB_NAME"),
         streaming=os.environ.get("STREAMING", False),
         requirements_file=os.environ.get("REQUIREMENTS_FILE"),
+        # num_workers=5
     )
 
     run_pipeline(CSV_PATH, mongo_uri, pipeline_options)
