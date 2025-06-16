@@ -18,3 +18,5 @@ ipdb
 streamlit
 opencv-python-headless
 google-cloud-storage
+
+matplotlib
