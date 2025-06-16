@@ -28,4 +28,4 @@ ENV STREAMLIT_SERVER_HEADLESS=true
 ENV STREAMLIT_SERVER_ENABLECORS=false
 
 # Entry point
-CMD ["streamlit", "run", "case_search.py"]
+CMD ["streamlit", "run", "app.py"]
