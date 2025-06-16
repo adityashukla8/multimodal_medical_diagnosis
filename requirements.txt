@@ -14,3 +14,7 @@ pymongo
 python-dotenv
 
 ipdb
+
+streamlit
+opencv-python-headless
+google-cloud-storage
