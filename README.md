@@ -5,7 +5,7 @@ MedFuse is an end-to-end pipeline that enables fast, accurate clinical case retr
 ---
 
 ## Architecture
-<img width="4324" alt="Multi-modal_arch" src="https://github.com/user-attachments/assets/bc382a8e-1f2d-47c0-b41b-3070614334b0" />
+<img width="3647" alt="Multi-modal_arch_1" src="https://github.com/user-attachments/assets/bd8063a9-3e04-4071-a4dc-648bdc89b788" />
 
 ---
 
