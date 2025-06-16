@@ -2,7 +2,7 @@ import streamlit as st
 
 st.set_page_config(page_title="MedFuse")
 
-st.title("🧠 MedFuse")
+st.title("🩺 MedFuse")
 st.markdown("#### *A Multi-modal Clinical Case Retrieval & Report Generation Tool*")
 
 st.write("Choose an option to get started:")
