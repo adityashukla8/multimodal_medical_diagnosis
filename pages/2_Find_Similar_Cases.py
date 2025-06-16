@@ -35,10 +35,20 @@ def show_results(docs):
                 st.markdown(f"**Caption:** {doc.get('caption_x', '-')}")
                 st.markdown(f"**GCS Path:** `{doc.get('image_path', '-')}`")
 
-st.title("🩺 Find Similar Cases")
-st.markdown("### For diagnostic ease and triage assistance.")
+st.title("🔍 Find Similar Cases")
+st.markdown("#### *For diagnostic ease and triage assistance.*")
+st.markdown("""**How it works**:
+- **Text Search**: Enter clinical notes to find similar cases.
+- **Image Search**: Provide a GCS path to an image to retrieve similar cases. 
+- **Combined Search**: Use both text and image inputs for a more comprehensive search.
 
-option = st.radio("Search similar cases using:", ["Text", "Image", "Text + Image"])
+**Sample GCS image paths for testing:**
+- `gs://multicare-dataset/pmc4/pmc461/pmc4614622_emerg-2-48-g002_undivided_1_1.jpg`
+- `gs://multicare-dataset/pmc7/pmc726/pmc7262379_gr3_undivided_1_1.jpg`
+- `gs://multicare-dataset/pmc4/pmc453/pmc4533487_nmc-54-673-g1_undivided_1_1.jpg`
+""")
+
+option = st.radio("Search similar cases using:", ["Text + Image", "Image", "Text"])
 
 if option == "Text":
     query = st.text_area("Enter clinical text...")
