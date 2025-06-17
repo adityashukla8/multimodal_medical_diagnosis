@@ -1,24 +1,24 @@
-# MedFuse: A Multi-modal Clinical Case Retrieval & Report Generation Tool
+# MedFuse: A Multi-modal Clinical Case Retrieval Tool enabling diagnostic ease, triage readiness & medical staff training
 
-MedFuse is an end-to-end pipeline that enables fast, accurate clinical case retrieval using multimodal data — combining both CT images and clinical text. It leverages Apache Beam (Dataflow), MongoDB Atlas vector search, and GCP services for scalable data processing.
+MedFuse is an end-to-end pipeline that enables fast, accurate clinical case retrieval using multimodal data, combining both CT images and clinical text. It leverages Apache Beam (Dataflow), MongoDB Atlas vector search, and GCP services for scalable data processing.
 
 ---
 
 ## Architecture
-<img width="3647" alt="Multi-modal_arch_1" src="https://github.com/user-attachments/assets/bd8063a9-3e04-4071-a4dc-648bdc89b788" />
+<img width="3649" alt="Multi-modal_arch_1" src="https://github.com/user-attachments/assets/8fb5f36a-4547-4df4-9fb9-642bfbf30bcc" />
 
 ---
 
 ## What We're Solving
 
 - **Healthcare data** is often large, complex, and scattered across formats (CSV metadata, case files in Parquet, and high-resolution medical images).
-- Traditional tools struggle to process and scale with large image volumes, & managing multi-modal data (image + text).
+- Traditional tools struggle to process and scale with large image volumes, & manage multi-modal data (image + text).
 - Clinicians need **quick, unified access** to patient data, history, and similar cases for **better decision-making, triage-assistance & staff education**
 - Efficient storage, search, and retrieval of embeddings often becomes a bottleneck.
 - We solve this by using **Google Cloud** for scalable processing, and **MongoDB Atlas** for efficient embedding storage, vector search, and retrieval.
 
-- The pipeline processes patient data, extracts & stores embeddings, integrates GenAI,
-  **enabling multi-modal case search and report generation via VLM (e.g., MedGemma) for downstream clinical workflows.**
+- The pipeline processes heterogeneous patient data, extracts & stores embeddings,
+  **enhancing medical workflows by enabling diagnostic ease, supporting triage decision-making through similar case retrieval, and accelerating training for medical staff.**
 
 --- 
 
