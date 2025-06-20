@@ -47,7 +47,7 @@ MedFuse is an end-to-end pipeline that enables fast, accurate clinical case retr
 
 ## Examples
 
-Try the following to see case retrieval in action:
+Try the following to see case retrieval in action hosted at https://multimodal-medical-diagnosis-502131642989.us-central1.run.app/Find_Similar_Cases:
 
 ### Example 1: Head Trauma Case
 > Unconscious patient following a fall. CT scan shows crescent-shaped hyperdensity along left hemisphere with midline shift. Likely subdural hematoma.
