@@ -22,6 +22,47 @@ MedFuse is an end-to-end pipeline that enables fast, accurate clinical case retr
 
 --- 
 
+## How It Works
+
+1. **Data Ingestion**  
+   Medical images (e.g., CT, X-ray) and accompanying clinical text are ingested from a public dataset hosted on Google Cloud Storage.
+
+2. **Embedding Generation via Apache Beam**  
+   A scalable pipeline processes:
+   - Visual features using a pretrained `DenseNet121` model (TensorFlow)
+   - Textual features using `Bio_ClinicalBERT` (HuggingFace Transformers)  
+   These embeddings are combined and stored in a MongoDB Atlas collection.
+
+3. **Vector Indexing & Search**  
+   A MongoDB Atlas vector index enables efficient retrieval of similar cases by computing similarity over the combined feature space.
+
+4. **Interactive Web App (Streamlit)**  
+   Users can:
+   - Search by **clinical text**, **image**, or both
+   - Upload images or use sample GCS links
+     > Image upload support coming soon!
+   - View retrieved similar cases along with findings, captions, and scores
+
+---
+
+## Examples
+
+Try the following to see case retrieval in action:
+
+### Example 1: Head Trauma Case
+> Unconscious patient following a fall. CT scan shows crescent-shaped hyperdensity along left hemisphere with midline shift. Likely subdural hematoma.
+
+### Example 2: Text + Image
+
+Use the following clinical text and GCS image path together:
+
+**Clinical Text:**
+> non-contrast head ct (transverse views) shows chronic right anterior cerebral artery (aca) and middle cerebral artery (mca) territory encephalomalacia with sparing of a small portion of the medial right frontal lobe, without evidence of bleed or new territory of acute infarction.
+**Image GCS Path:**
+```gs://multicare-dataset/pmc4/pmc481/pmc4815137_fneur-07-00050-g001_a_1_2.jpg```
+
+---
+
 ## Dataset
 
 - Source: MultiCaRe - A Multi-Modal Clinical Dataset
