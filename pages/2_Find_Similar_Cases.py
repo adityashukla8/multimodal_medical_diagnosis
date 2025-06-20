@@ -95,3 +95,4 @@ for label, path in sample_images.items():
             st.image(img, caption=label, use_container_width=True)
         except Exception as e:
             st.error(f"Could not load image: {e}")
+
