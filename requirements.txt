@@ -20,3 +20,4 @@ opencv-python-headless
 google-cloud-storage
 
 matplotlib
+PIL
