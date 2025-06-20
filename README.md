@@ -1,4 +1,4 @@
-# MedFuse: A Multi-modal Clinical Case Retrieval Tool enabling diagnostic ease, triage readiness & medical staff training
+# 🩺 MedFuse: A Multi-modal Clinical Case Retrieval Tool enabling diagnostic ease, triage readiness & medical staff training
 
 MedFuse is an end-to-end pipeline that enables fast, accurate clinical case retrieval using multimodal data, combining both CT images and clinical text. It leverages Apache Beam (Dataflow), MongoDB Atlas vector search, and GCP services for scalable data processing.
 
