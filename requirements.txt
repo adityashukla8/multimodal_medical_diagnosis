@@ -1,5 +1,5 @@
 pandas
-numpy
+numpy<2.3
 
 tensorflow>=2.8.0
 torch
@@ -20,4 +20,4 @@ opencv-python-headless
 google-cloud-storage
 
 matplotlib
-PIL
+Pillow==10.3.0
